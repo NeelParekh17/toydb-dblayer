@@ -68,29 +68,28 @@ loadCSV() {
     int err = Table_Open(DB_NAME, sch, true, &tbl);
     checkerr(err);
     
-    // Open index file
-    err = PF_CreateFile(INDEX_NAME);
+    // Create secondary index on DB_NAME with indexNo = 0 -> "data.db.0"
+    PF_DestroyFile(INDEX_NAME);
+    err = AM_CreateIndex(DB_NAME, 0, 'i', sizeof(int));
+    checkerr(err);
+    
     int indexFD = PF_OpenFile(INDEX_NAME);
     checkerr(indexFD);
-    
-    // Create index
-    err = AM_CreateIndex(INDEX_NAME, 0, 'i', 4);
-    checkerr(err);
 
     char *tokens[MAX_TOKENS];
     char record[MAX_PAGE_SIZE];
     while ((line = fgets(buf, MAX_LINE_LEN, fp)) != NULL) {
         int n = split(line, ",", tokens);
         assert (n == sch->numColumns);
-        int len = encode(sch, tokens, record, sizeof(record));
+        int len = encode(sch, tokens, (byte*)record, sizeof(record));
         RecId rid;
-        err = Table_Insert(tbl, record, len, &rid);
+        err = Table_Insert(tbl, (byte*)record, len, &rid);
         checkerr(err);
         printf("%d %s\n", rid, tokens[0]);
         
-        // Indexing on the population column
+        // Indexing on the population column (tokens[2])
         int population = atoi(tokens[2]);
-        err = AM_InsertEntry(indexFD, 'i', 4, (char*)&population, rid);
+        err = AM_InsertEntry(indexFD, 'i', sizeof(int), (char*)&population, rid);
         checkerr(err);
     }
 
@@ -104,4 +103,5 @@ loadCSV() {
 int
 main() {
     loadCSV();
+    return 0;
 }

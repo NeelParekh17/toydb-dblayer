@@ -50,7 +50,7 @@ index_scan(Table *tbl, Schema *schema, int indexFD, int op, int value) {
     int scanDesc;
     
     // Open index scan
-    scanDesc = AM_OpenIndexScan(indexFD, 'i', 4, op, (char*)&value);
+    scanDesc = AM_OpenIndexScan(indexFD, 'i', sizeof(int), op, (char*)&value);
     checkerr(scanDesc);
     
     // Scan through index entries
@@ -59,9 +59,10 @@ index_scan(Table *tbl, Schema *schema, int indexFD, int op, int value) {
         // Fetch record from table
         byte record[4000];
         int len = Table_Get(tbl, rid, record, sizeof(record));
-        
-        // Print the row
-        printRow(schema, rid, record, len);
+        if (len > 0) {
+            // Print the row
+            printRow(schema, rid, record, len);
+        }
     }
     
     // Close index scan
@@ -85,15 +86,16 @@ main(int argc, char **argv) {
         // index scan by default
         int indexFD = PF_OpenFile(INDEX_NAME);
         checkerr(indexFD);
-        
-        // Ask for populations less than 100000, then more than 100000. Together they should
-        // yield the complete database.
-        index_scan(tbl, schema, indexFD, 4, 100000); // LESS_THAN_EQUAL = 4
-        index_scan(tbl, schema, indexFD, 3, 100000); // GREATER_THAN = 3
+
+        // Ask for populations less than or equal to 100000, then more than 100000.
+        // Together they should yield the complete database.
+        index_scan(tbl, schema, indexFD, LESS_THAN_EQUAL, 100000);
+        index_scan(tbl, schema, indexFD, GREATER_THAN, 100000);
         
         err = PF_CloseFile(indexFD);
         checkerr(err);
     }
     
     Table_Close(tbl);
+    return 0;
 }
