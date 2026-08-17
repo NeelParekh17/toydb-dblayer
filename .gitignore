@@ -1,0 +1,27 @@
+# Build objects and archives
+*.o
+*.a
+*~
+a.out*
+
+# Database files
+data.db*
+
+# Binaries
+dblayer/dumpdb
+dblayer/loaddb
+pflayer/test1
+pflayer/test2
+pflayer/testhash
+pflayer/testpf
+pflayer/file1
+pflayer/file2
+amlayer/test1
+amlayer/test2
+amlayer/test3
+amlayer/main
+amlayer/o1
+amlayer/o2
+amlayer/o3
+amlayer/o4
+amlayer/AM
